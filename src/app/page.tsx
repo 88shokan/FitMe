@@ -5,6 +5,7 @@ import { CATALOG } from "@/lib/catalog";
 import { ASSUMPTIONS, equivalence } from "@/lib/impact";
 import { GarmentImage } from "@/components/GarmentImage";
 import { PhotoGuidance } from "@/components/PhotoGuidance";
+import { PocketPanel } from "@/components/PocketPanel";
 import type {
   Garment,
   GarmentCategory,
@@ -24,6 +25,12 @@ const WAIT_MESSAGES = [
   "Checking the size chart…",
   "Almost there…",
 ];
+
+/* Denim button recipes. `stitched` adds the inset dashed contrast thread. */
+const BTN_BASE =
+  "inline-flex items-center justify-center gap-2 rounded px-6 py-3 label-type transition-all disabled:opacity-40 disabled:cursor-not-allowed";
+const BTN_PRIMARY = `${BTN_BASE} stitched bg-dark-indigo text-white hover:bg-classic-indigo hover:-translate-y-0.5 disabled:hover:translate-y-0 shadow-[0_2px_8px_rgba(26,42,58,0.12)]`;
+const BTN_SECONDARY = `${BTN_BASE} border-2 border-classic-indigo text-classic-indigo hover:bg-bleached`;
 
 export default function Home() {
   const [step, setStep] = useState<Step>("you");
@@ -136,43 +143,54 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <header className="border-b border-border">
-        <div className="mx-auto max-w-5xl px-5 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-baseline gap-2.5">
-            <span className="text-lg font-semibold tracking-tight">FitMe</span>
-            <span className="text-xs text-muted hidden sm:inline">
-              See it on you before you order
-            </span>
+      {/* ============================================ HEADER — denim panel */}
+      <header className="fabric-dark bg-gradient-to-b from-dark-indigo to-raw-denim text-white">
+        <div className="relative z-10 mx-auto max-w-5xl px-5 py-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <span className="rivet rivet-lg" aria-hidden />
+            <div>
+              <h1 className="display text-3xl sm:text-4xl text-white">FitMe</h1>
+              <p className="label-type text-light-wash mt-0.5">
+                See it on you before you order
+              </p>
+            </div>
           </div>
+
           {sessionSaved > 0 && (
-            <div className="text-right">
-              <div className="text-sm font-semibold text-accent">
-                {sessionSaved.toFixed(2)} kg CO₂e
+            <div className="leather rounded px-5 py-2.5 text-center">
+              <div className="relative z-10">
+                <div className="display text-xl text-cream leading-none">
+                  {sessionSaved.toFixed(2)} kg
+                </div>
+                <div className="label-type text-leather-light mt-1">
+                  CO₂e avoided
+                </div>
               </div>
-              <div className="text-[11px] text-muted">avoided this session</div>
             </div>
           )}
         </div>
+        <div className="stitch-line mx-5 opacity-70" />
       </header>
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-5 py-8">
         <Steps current={step} />
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40 px-4 py-3 text-sm text-red-800 dark:text-red-200">
-            {error}
+          <div className="selvage mb-6 rounded bg-white pl-6 pr-4 py-3.5 shadow-[0_2px_8px_rgba(26,42,58,0.12)]">
+            <p className="label-type text-selvage-red mb-1">Something snagged</p>
+            <p className="text-sm text-charcoal">{error}</p>
           </div>
         )}
 
         {/* ---------------------------------------------------- Step 1: You */}
         {step === "you" && (
           <section className="grid gap-8 md:grid-cols-2">
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight mb-1.5">
+                <h2 className="display text-3xl text-raw-denim mb-2">
                   Start with a photo
-                </h1>
-                <p className="text-sm text-muted">
+                </h2>
+                <p className="text-charcoal">
                   Roughly a quarter of clothes bought online get sent back, and
                   fit is the number one reason. One photo is enough to check
                   before you order.
@@ -182,7 +200,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
-                className="relative w-full aspect-[3/4] rounded-xl border-2 border-dashed border-border hover:border-accent transition-colors overflow-hidden bg-surface flex items-center justify-center"
+                className="relative w-full aspect-[3/4] rounded border-2 border-dashed border-thread-orange bg-white hover:bg-bleached transition-colors overflow-hidden flex items-center justify-center shadow-[0_2px_8px_rgba(26,42,58,0.12)]"
               >
                 {photoPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -192,13 +210,17 @@ export default function Home() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="text-sm text-muted px-6 text-center">
-                    Click to upload a full-body photo
-                    <br />
-                    <span className="text-xs">JPG or PNG, up to 10MB</span>
+                  <span className="px-6 text-center">
+                    <span className="label-type block text-classic-indigo mb-1">
+                      Click to upload
+                    </span>
+                    <span className="text-sm text-muted">
+                      Full-body photo · JPG or PNG · up to 10MB
+                    </span>
                   </span>
                 )}
               </button>
+
               <input
                 ref={fileInput}
                 type="file"
@@ -209,6 +231,7 @@ export default function Home() {
                   if (f) choosePhoto(f);
                 }}
               />
+
               <p className="text-xs text-muted">
                 Your photo is sent to the try-on model and is never saved to our
                 database.
@@ -218,16 +241,18 @@ export default function Home() {
             <div className="space-y-5">
               <PhotoGuidance />
 
-              <div className="rounded-xl border border-border bg-surface p-4 space-y-4">
-                <p className="text-sm font-medium">A few measurements</p>
+              <PocketPanel>
+                <p className="label-type text-classic-indigo mb-4">
+                  A few measurements
+                </p>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 mb-4">
                   <Field label="Height (in)">
                     <input
                       type="number"
                       value={heightIn}
                       onChange={(e) => setHeightIn(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                      className="w-full rounded border-2 border-medium-wash bg-bleached px-3 py-2 text-sm text-charcoal shadow-[inset_0_2px_4px_rgba(26,42,58,0.08)] focus:outline-none focus:border-classic-indigo focus:bg-white"
                     />
                   </Field>
                   <Field label="Weight (lb)">
@@ -235,29 +260,31 @@ export default function Home() {
                       type="number"
                       value={weightLb}
                       onChange={(e) => setWeightLb(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                      className="w-full rounded border-2 border-medium-wash bg-bleached px-3 py-2 text-sm text-charcoal shadow-[inset_0_2px_4px_rgba(26,42,58,0.08)] focus:outline-none focus:border-classic-indigo focus:bg-white"
                     />
                   </Field>
                 </div>
 
-                <Field label="Size you usually wear">
-                  <div className="flex flex-wrap gap-1.5">
-                    {SIZES.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setUsualSize(s)}
-                        className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                          usualSize === s
-                            ? "border-accent bg-accent text-accent-contrast font-medium"
-                            : "border-border hover:border-accent"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </Field>
+                <div className="mb-4">
+                  <Field label="Size you usually wear">
+                    <div className="flex flex-wrap gap-1.5">
+                      {SIZES.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setUsualSize(s)}
+                          className={`px-3 py-1.5 rounded label-type border-2 transition-colors ${
+                            usualSize === s
+                              ? "border-dark-indigo bg-dark-indigo text-white"
+                              : "border-light-wash text-classic-indigo hover:border-classic-indigo"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
 
                 <Field label="How you like it to fit">
                   <div className="flex gap-1.5">
@@ -266,10 +293,10 @@ export default function Home() {
                         key={p}
                         type="button"
                         onClick={() => setFitPreference(p)}
-                        className={`flex-1 px-3 py-1.5 rounded-lg text-sm border capitalize transition-colors ${
+                        className={`flex-1 px-3 py-1.5 rounded label-type border-2 transition-colors ${
                           fitPreference === p
-                            ? "border-accent bg-accent text-accent-contrast font-medium"
-                            : "border-border hover:border-accent"
+                            ? "border-dark-indigo bg-dark-indigo text-white"
+                            : "border-light-wash text-classic-indigo hover:border-classic-indigo"
                         }`}
                       >
                         {p}
@@ -277,13 +304,13 @@ export default function Home() {
                     ))}
                   </div>
                 </Field>
-              </div>
+              </PocketPanel>
 
               <button
                 type="button"
                 disabled={!photo}
                 onClick={() => setStep("garment")}
-                className="w-full rounded-lg bg-accent text-accent-contrast py-2.5 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                className={`${BTN_PRIMARY} w-full`}
               >
                 {photo ? "Choose something to try on" : "Upload a photo first"}
               </button>
@@ -296,25 +323,24 @@ export default function Home() {
           <section className="space-y-6">
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight mb-1.5">
+                <h2 className="display text-3xl text-raw-denim mb-2">
                   Pick something to try on
-                </h1>
-                <p className="text-sm text-muted">
-                  Choose from the catalog, or paste a product link from any
-                  store.
+                </h2>
+                <p className="text-charcoal">
+                  Choose from the rack, or paste a product link from any store.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setStep("you")}
-                className="text-sm text-muted hover:text-foreground underline"
+                className="label-type text-classic-indigo underline underline-offset-4 hover:text-dark-indigo"
               >
-                Back to your photo
+                ← Back to your photo
               </button>
             </div>
 
-            <div className="rounded-xl border border-border bg-surface p-4">
-              <label className="text-sm font-medium block mb-2">
+            <PocketPanel>
+              <label className="label-type text-classic-indigo block mb-3">
                 Paste a product URL
               </label>
               <div className="flex gap-2 flex-wrap sm:flex-nowrap">
@@ -323,40 +349,39 @@ export default function Home() {
                   value={pastedUrl}
                   placeholder="https://store.com/products/…"
                   onChange={(e) => setPastedUrl(e.target.value)}
-                  className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  className="flex-1 min-w-0 rounded border-2 border-medium-wash bg-bleached px-3 py-2 text-sm text-charcoal shadow-[inset_0_2px_4px_rgba(26,42,58,0.08)] focus:outline-none focus:border-classic-indigo focus:bg-white"
                 />
                 <button
                   type="button"
                   onClick={lookupProduct}
                   disabled={pasteBusy || !pastedUrl.trim()}
-                  className="rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent disabled:opacity-40"
+                  className={`${BTN_SECONDARY} py-2`}
                 >
                   {pasteBusy ? "Reading…" : "Fetch"}
                 </button>
               </div>
+
               {pasted && (
-                <div className="mt-3 flex items-center gap-3 rounded-lg bg-accent-soft p-2.5">
+                <div className="mt-4 flex items-center gap-3 rounded bg-bleached border-2 border-light-wash p-3">
                   <GarmentImage
                     src={pasted.image}
                     alt={pasted.title}
-                    className="h-16 w-16 rounded object-cover shrink-0"
+                    className="h-16 w-16 rounded object-cover shrink-0 border border-light-wash"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">
+                    <p className="heading text-sm text-raw-denim truncate">
                       {pasted.title}
                     </p>
-                    <div className="flex gap-1.5 mt-1.5">
+                    <div className="flex gap-1.5 mt-2">
                       {(["tops", "bottoms", "one-pieces"] as const).map((c) => (
                         <button
                           key={c}
                           type="button"
-                          onClick={() =>
-                            setPasted({ ...pasted, category: c })
-                          }
-                          className={`px-2 py-0.5 rounded text-[11px] border ${
+                          onClick={() => setPasted({ ...pasted, category: c })}
+                          className={`px-2 py-0.5 rounded text-[11px] label-type border-2 ${
                             pasted.category === c
-                              ? "border-accent bg-accent text-accent-contrast"
-                              : "border-border"
+                              ? "border-dark-indigo bg-dark-indigo text-white"
+                              : "border-light-wash text-classic-indigo"
                           }`}
                         >
                           {c}
@@ -366,7 +391,9 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </div>
+            </PocketPanel>
+
+            <StitchDivider />
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {CATALOG.map((g) => {
@@ -379,10 +406,10 @@ export default function Home() {
                       setSelected(g);
                       setPasted(null);
                     }}
-                    className={`text-left rounded-xl border overflow-hidden bg-surface transition-colors ${
+                    className={`text-left rounded overflow-hidden bg-white border-2 transition-all hover:-translate-y-1 shadow-[0_2px_8px_rgba(26,42,58,0.12)] ${
                       active
-                        ? "border-accent ring-2 ring-accent/30"
-                        : "border-border hover:border-accent"
+                        ? "border-thread-orange ring-2 ring-thread-orange/30"
+                        : "border-light-wash hover:border-classic-indigo"
                     }`}
                   >
                     <GarmentImage
@@ -390,11 +417,11 @@ export default function Home() {
                       alt={g.name}
                       className="aspect-[3/4] w-full object-cover"
                     />
-                    <div className="p-2.5">
-                      <p className="text-sm font-medium leading-tight">
+                    <div className="p-3 border-t-2 border-dashed border-thread-orange">
+                      <p className="heading text-sm text-raw-denim leading-tight">
                         {g.name}
                       </p>
-                      <p className="text-xs text-muted mt-0.5">
+                      <p className="label-type text-muted mt-1">
                         ${g.priceUsd} · {g.category}
                       </p>
                     </div>
@@ -407,7 +434,7 @@ export default function Home() {
               type="button"
               disabled={!garmentChosen}
               onClick={generate}
-              className="w-full rounded-lg bg-accent text-accent-contrast py-3 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`${BTN_PRIMARY} w-full py-4`}
             >
               {garmentChosen ? "Try it on" : "Select a garment"}
             </button>
@@ -419,8 +446,8 @@ export default function Home() {
           <section className="space-y-6">
             {busy && (
               <div className="space-y-4">
-                <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-surface-muted shimmer" />
-                <p className="text-center text-sm text-muted">
+                <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded border-2 border-dashed border-thread-orange bg-bleached shimmer" />
+                <p className="label-type text-center text-classic-indigo">
                   {WAIT_MESSAGES[waitIndex]}
                 </p>
               </div>
@@ -430,11 +457,13 @@ export default function Home() {
               <>
                 <div className="grid gap-5 md:grid-cols-2">
                   <figure className="space-y-2">
-                    <GarmentImage
-                      src={result.tryOn.imageUrl}
-                      alt="You wearing the selected garment"
-                      className="w-full rounded-xl border border-border object-cover"
-                    />
+                    <div className="riveted relative rounded border-2 border-light-wash bg-white p-3 shadow-[0_4px_16px_rgba(26,42,58,0.18)]">
+                      <GarmentImage
+                        src={result.tryOn.imageUrl}
+                        alt="You wearing the selected garment"
+                        className="w-full rounded object-cover"
+                      />
+                    </div>
                     <figcaption className="text-xs text-muted text-center">
                       Generated in {(result.tryOn.ms / 1000).toFixed(1)}s ·
                       AI-generated preview, not a photograph
@@ -443,24 +472,24 @@ export default function Home() {
 
                   <div className="space-y-4">
                     {result.fit && (
-                      <div className="rounded-xl border border-border bg-surface p-5">
-                        <p className="text-xs uppercase tracking-wide text-muted mb-1">
+                      <div className="selvage relative rounded bg-white pl-7 pr-5 py-5 shadow-[0_2px_8px_rgba(26,42,58,0.12)]">
+                        <p className="label-type text-thread-orange mb-1">
                           Recommended size
                         </p>
-                        <p className="text-4xl font-semibold tracking-tight mb-3">
+                        <p className="display text-6xl text-raw-denim mb-4">
                           {result.fit.recommendedSize}
                         </p>
 
-                        <div className="mb-3">
-                          <div className="flex justify-between text-xs text-muted mb-1">
+                        <div className="mb-4">
+                          <div className="flex justify-between label-type text-muted mb-1.5">
                             <span>Fit confidence</span>
-                            <span>
+                            <span className="text-classic-indigo">
                               {Math.round(result.fit.confidence * 100)}%
                             </span>
                           </div>
-                          <div className="h-1.5 rounded-full bg-surface-muted overflow-hidden">
+                          <div className="h-2 rounded-full bg-bleached overflow-hidden border border-light-wash">
                             <div
-                              className="h-full rounded-full bg-accent"
+                              className="h-full rounded-full bg-gradient-to-r from-classic-indigo to-medium-wash"
                               style={{
                                 width: `${result.fit.confidence * 100}%`,
                               }}
@@ -468,7 +497,9 @@ export default function Home() {
                           </div>
                         </div>
 
-                        <p className="text-sm">{result.fit.rationale}</p>
+                        <p className="text-sm text-charcoal">
+                          {result.fit.rationale}
+                        </p>
                         {result.fit.alternative && (
                           <p className="text-sm text-muted mt-2">
                             {result.fit.alternative}
@@ -482,52 +513,56 @@ export default function Home() {
                       </div>
                     )}
 
-                    <div className="rounded-xl border border-accent/40 bg-accent-soft p-5">
-                      <p className="text-xs uppercase tracking-wide text-muted mb-1">
-                        Estimated impact
-                      </p>
-                      <p className="text-2xl font-semibold tracking-tight text-accent">
-                        {result.impactKgCo2e.toFixed(2)} kg CO₂e avoided
-                      </p>
-                      <p className="text-sm text-muted mt-1">
-                        Roughly {equivalence(result.impactKgCo2e)}, from one
-                        return that likely won&apos;t happen.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowAssumptions((v) => !v)}
-                        className="mt-3 text-xs underline text-muted hover:text-foreground"
-                      >
-                        {showAssumptions ? "Hide" : "Show"} our assumptions
-                      </button>
-                      {showAssumptions && (
-                        <dl className="mt-3 space-y-2 text-xs">
-                          {ASSUMPTIONS.map((a) => (
-                            <div key={a.key}>
-                              <dt className="font-medium">
-                                {a.label}: {a.value} {a.unit}
-                              </dt>
-                              <dd className="text-muted">{a.source}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      )}
+                    <div className="leather rounded px-6 py-5">
+                      <div className="relative z-10">
+                        <p className="label-type text-leather-light mb-1">
+                          Estimated impact
+                        </p>
+                        <p className="display text-3xl text-cream">
+                          {result.impactKgCo2e.toFixed(2)} kg CO₂e avoided
+                        </p>
+                        <p className="text-sm text-cream/85 mt-2">
+                          Roughly {equivalence(result.impactKgCo2e)}, from one
+                          return that likely won&apos;t happen.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowAssumptions((v) => !v)}
+                          className="mt-3 label-type text-leather-light underline underline-offset-4 hover:text-cream"
+                        >
+                          {showAssumptions ? "Hide" : "Show"} our assumptions
+                        </button>
+                        {showAssumptions && (
+                          <dl className="mt-4 space-y-2.5 text-xs border-t border-leather-light/40 pt-4">
+                            {ASSUMPTIONS.map((a) => (
+                              <div key={a.key}>
+                                <dt className="heading text-cream">
+                                  {a.label}: {a.value} {a.unit}
+                                </dt>
+                                <dd className="text-cream/70">{a.source}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                <StitchDivider />
 
                 <div className="flex gap-3 flex-wrap">
                   <button
                     type="button"
                     onClick={startOver}
-                    className="rounded-lg bg-accent text-accent-contrast px-5 py-2.5 text-sm font-medium"
+                    className={BTN_PRIMARY}
                   >
                     Try another item
                   </button>
                   <button
                     type="button"
                     onClick={() => setStep("you")}
-                    className="rounded-lg border border-border px-5 py-2.5 text-sm"
+                    className={BTN_SECONDARY}
                   >
                     Use a different photo
                   </button>
@@ -537,15 +572,15 @@ export default function Home() {
 
             {!busy && !result && (
               <div className="text-center py-12 space-y-4">
-                <p className="text-sm text-muted">
+                <p className="text-charcoal">
                   That try-on didn&apos;t complete.
                 </p>
                 <button
                   type="button"
                   onClick={() => setStep("garment")}
-                  className="rounded-lg border border-border px-5 py-2.5 text-sm"
+                  className={BTN_SECONDARY}
                 >
-                  Back to the catalog
+                  Back to the rack
                 </button>
               </div>
             )}
@@ -553,12 +588,34 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-5xl px-5 py-4 text-xs text-muted">
-          Built at Temple Owl Hacks · Sustainability track. Try-on images are
-          AI-generated previews, not photographs.
+      {/* ============================================ FOOTER — raw denim */}
+      <footer className="fabric-dark bg-raw-denim text-stonewash mt-8">
+        <div className="stitch-line mx-5 mt-5 opacity-70" />
+        <div className="relative z-10 mx-auto max-w-5xl px-5 py-7 text-center">
+          <div className="flex justify-center gap-4 mb-4" aria-hidden>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span key={i} className="rivet" />
+            ))}
+          </div>
+          <p className="label-type text-medium-wash">
+            Built at Temple Owl Hacks · Sustainability Track
+          </p>
+          <p className="text-xs text-light-wash/70 mt-2">
+            Try-on images are AI-generated previews, not photographs.
+          </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/** Dashed thread run with a copper rivet at the centre. */
+function StitchDivider() {
+  return (
+    <div className="flex items-center justify-center gap-4 py-2" aria-hidden>
+      <div className="stitch-line-gold flex-1 max-w-[200px]" />
+      <span className="rivet" />
+      <div className="stitch-line-gold flex-1 max-w-[200px]" />
     </div>
   );
 }
@@ -572,29 +629,29 @@ function Steps({ current }: { current: Step }) {
   const activeIndex = steps.findIndex((s) => s.key === current);
 
   return (
-    <ol className="flex items-center gap-2 mb-8 text-xs">
+    <ol className="flex items-center gap-3 mb-8 flex-wrap">
       {steps.map((s, i) => (
-        <li key={s.key} className="flex items-center gap-2">
-          <span
-            className={`flex items-center gap-1.5 ${
-              i <= activeIndex ? "text-foreground" : "text-muted"
-            }`}
-          >
+        <li key={s.key} className="flex items-center gap-3">
+          <span className="flex items-center gap-2">
             <span
-              className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-semibold ${
+              className={`grid h-8 w-8 place-items-center rounded-full display text-sm shadow-[0_2px_8px_rgba(26,42,58,0.12)] ${
                 i <= activeIndex
-                  ? "bg-accent text-accent-contrast"
-                  : "bg-surface-muted text-muted"
+                  ? "bg-classic-indigo text-white"
+                  : "bg-white text-light-wash border-2 border-light-wash"
               }`}
             >
               {i + 1}
             </span>
-            {s.label}
+            <span
+              className={`label-type ${
+                i <= activeIndex ? "text-raw-denim" : "text-muted"
+              }`}
+            >
+              {s.label}
+            </span>
           </span>
           {i < steps.length - 1 && (
-            <span aria-hidden className="text-border">
-              ──
-            </span>
+            <span aria-hidden className="stitch-line w-8 opacity-60" />
           )}
         </li>
       ))}
@@ -611,7 +668,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs text-muted block mb-1.5">{label}</span>
+      <span className="label-type text-muted block mb-1.5">{label}</span>
       {children}
     </label>
   );

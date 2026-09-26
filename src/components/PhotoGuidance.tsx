@@ -1,3 +1,5 @@
+import { PocketPanel } from "./PocketPanel";
+
 /**
  * Photo quality is the single biggest driver of output quality. Without this
  * guidance visible at upload time, most results look broken and users blame the
@@ -15,22 +17,29 @@ const BAD = ["Group photos", "Heavy shadows", "Baggy layers", "Crossed arms"];
 
 export function PhotoGuidance() {
   return (
-    <div className="rounded-xl border border-border bg-surface-muted p-4 text-sm">
-      <p className="font-medium mb-3">For the best result</p>
-      <ul className="space-y-1.5 mb-3">
+    <PocketPanel>
+      <p className="label-type text-classic-indigo mb-3">For the best result</p>
+
+      <ul className="space-y-2 mb-4">
         {GOOD.map((tip) => (
-          <li key={tip} className="flex gap-2 text-muted">
-            <span aria-hidden className="text-accent font-semibold">
+          <li key={tip} className="flex gap-2.5 text-sm text-charcoal">
+            <span
+              aria-hidden
+              className="text-thread-orange font-bold leading-snug"
+            >
               ✓
             </span>
             <span>{tip}</span>
           </li>
         ))}
       </ul>
-      <p className="text-muted">
-        <span className="font-medium text-foreground">Avoid:</span>{" "}
-        {BAD.join(" · ")}
-      </p>
-    </div>
+
+      <div className="border-t-2 border-dashed border-thread-orange pt-3">
+        <p className="text-sm text-muted">
+          <span className="label-type text-selvage-red">Avoid:</span>{" "}
+          {BAD.join(" · ")}
+        </p>
+      </div>
+    </PocketPanel>
   );
 }

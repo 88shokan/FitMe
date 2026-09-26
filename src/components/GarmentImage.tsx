@@ -24,13 +24,11 @@ export function GarmentImage({
   if (failed) {
     return (
       <div
-        className={`flex items-center justify-center bg-surface-muted text-muted text-xs text-center px-3 ${className}`}
+        className={`flex flex-col items-center justify-center gap-2 bg-bleached px-3 text-center ${className}`}
       >
-        <span>
-          Add an image at
-          <br />
-          <code className="font-mono">{src}</code>
-        </span>
+        <span className="rivet" aria-hidden />
+        <span className="label-type text-medium-wash">Missing image</span>
+        <code className="text-[10px] text-muted break-all">{src}</code>
       </div>
     );
   }
