@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FitMe
 
-## Getting Started
+Cut apparel returns by letting shoppers see a garment on themselves before they
+order. Built at Temple Owl Hacks, sustainability track.
 
-First, run the development server:
+Roughly a quarter of clothes bought online get returned, and fit is the leading
+reason. Every avoided return is a shipping round trip — and sometimes a
+landfilled garment — that never happens.
+
+## Setup
 
 ```bash
+npm install
+cp .env.local.example .env.local   # then paste your FAL_KEY
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Only `FAL_KEY` is required. Get one at <https://fal.ai/dashboard/keys>.
+`ANTHROPIC_API_KEY` is optional — without it the size recommendation falls back
+to the deterministic rule-based path, which always works.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then save eight product photos into `public/garments/` (see the README in that
+folder for the exact filenames).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How it works
 
-## Learn More
+```
+Browser                Next.js route handler              fal.ai
+  │
+  ├─ photo (File) ────▶ POST /api/tryon
+  │                      ├─ upload person image ──────────▶ fal storage
+  │                      ├─ garment: catalog or scraped URL
+  │                      ├─ tryOn() ──────────────────────▶ FASHN v1.6
+  │                      │                           ◀───── generated image
+  │                      ├─ recommendFit()  (rules, then Claude)
+  │                      └─ avoidedKgCo2e()
+  │  ◀── { tryOn, fit, impactKgCo2e } ──┘
+  │
+  └─ render; nothing persisted server-side
+```
 
-To learn more about Next.js, take a look at the following resources:
+No accounts, no database, no ORM. That absence is deliberate — it keeps the
+build small and doubles as the privacy story.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Path | What it does |
+|---|---|
+| `src/lib/tryon.ts` | Try-on provider adapter. **All** model-specific code lives here |
+| `src/lib/fit.ts` | Size recommendation: deterministic rules, then optional Claude refinement |
+| `src/lib/impact.ts` | CO₂e math. Every assumption is named and needs a real citation |
+| `src/lib/catalog.ts` | The eight seeded garments and their size charts |
+| `src/app/api/tryon/route.ts` | Main endpoint: upload → generate → size → impact |
+| `src/app/api/product/route.ts` | Scrapes `og:image` so you can try on any store's product URL |
 
-## Deploy on Vercel
+## Key decisions
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**A purpose-built try-on model, not a general image generator.** A general model
+invents a garment resembling a description — pattern, logo and cut all drift. If
+the shirt in the output isn't genuinely the shirt from the product page, the fit
+claim is fiction. `src/lib/tryon.ts` is a thin adapter so a provider swap is a
+five-minute job.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Deterministic size logic first, LLM second.** `deterministicFit()` always
+returns an answer with no network call. Claude only rewrites the rationale. The
+demo cannot be broken by a rate limit or dead wifi.
+
+**No body measurement from photos.** Unreliable, and it would eat the whole
+hackathon. Self-reported usual size is a stronger signal anyway.
+
+**Assumptions are visible.** The impact number expands to show all five inputs.
+Judges trust stated assumptions far more than a confident magic number.
+
+## Before you present
+
+- [ ] Replace every `CITE` placeholder in `src/lib/impact.ts` with a real source
+- [ ] Save real product images into `public/garments/`
+- [ ] Set `FAL_TRYON_MODE=quality` for the demo build
+- [ ] Cache 2–3 known-good results so a wifi failure can't kill the demo
+- [ ] Rehearse the demo end to end, three times
+- [ ] Don't claim photos are "deleted immediately" — uploads live on fal's CDN
+      unless you add an explicit delete call (see the note in the try-on route)
