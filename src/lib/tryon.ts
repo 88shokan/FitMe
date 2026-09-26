@@ -47,13 +47,61 @@ function configure() {
   configured = true;
 }
 
+/** Refuse anything that isn't a reasonably sized image. */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
 /**
- * Upload a user photo to fal's storage and return a public URL the model can
- * read. Saves us standing up separate blob storage for the MVP.
+ * Upload an image to fal's storage and return a public URL the model can read.
+ * Saves us standing up separate blob storage for the MVP.
  */
-export async function uploadPersonImage(file: File): Promise<string> {
+export async function uploadImage(file: File | Blob): Promise<string> {
   configure();
-  return fal.storage.upload(file);
+  return fal.storage.upload(
+    file instanceof File ? file : new File([file], "image", { type: file.type })
+  );
+}
+
+/** Kept for readability at the call site; person and garment share one path. */
+export const uploadPersonImage = uploadImage;
+
+/**
+ * Download a remote image and re-host it on fal.
+ *
+ * Why not just hand the model the original URL: many retail CDNs reject
+ * unknown server-side fetchers, so a URL that loads fine in the user's browser
+ * can still fail when the model tries to read it. Mirroring it means the fetch
+ * happens once, from us, where we can see and report the failure.
+ */
+export async function mirrorRemoteImage(url: string): Promise<string> {
+  const res = await fetch(url, {
+    headers: {
+      "user-agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
+      accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+    },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `That image URL returned ${res.status}. The store may be blocking downloads — try saving the image and uploading it instead.`
+    );
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.startsWith("image/")) {
+    throw new Error(
+      "That URL isn't a direct image link. Right-click the product photo and choose “Copy image address”."
+    );
+  }
+
+  const blob = await res.blob();
+  if (blob.size === 0) throw new Error("That image came back empty.");
+  if (blob.size > MAX_IMAGE_BYTES) {
+    throw new Error("That image is over 10MB.");
+  }
+
+  return uploadImage(blob);
 }
 
 export async function tryOn(input: TryOnInput): Promise<TryOnResult> {

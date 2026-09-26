@@ -54,14 +54,22 @@ export default function Home() {
   } | null>(null);
   const [pasteBusy, setPasteBusy] = useState(false);
 
+  /** Uploaded garment image — the path that works on every store. */
+  const [garmentFile, setGarmentFile] = useState<File | null>(null);
+  const [garmentPreview, setGarmentPreview] = useState<string | null>(null);
+  const [garmentCategory, setGarmentCategory] =
+    useState<GarmentCategory>("tops");
+
   const [busy, setBusy] = useState(false);
   const [waitIndex, setWaitIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [errorHint, setErrorHint] = useState<string | null>(null);
   const [result, setResult] = useState<TryOnResponse | null>(null);
   const [sessionSaved, setSessionSaved] = useState(0);
   const [showAssumptions, setShowAssumptions] = useState(false);
 
   const fileInput = useRef<HTMLInputElement>(null);
+  const garmentInput = useRef<HTMLInputElement>(null);
 
   // Cycle the wait copy while a generation is in flight.
   useEffect(() => {
@@ -80,18 +88,34 @@ export default function Home() {
     setPhotoPreview(URL.createObjectURL(file));
   }
 
-  const garmentChosen = selected ?? pasted;
+  /** Choosing any one garment source clears the other two. */
+  function chooseGarmentFile(file: File) {
+    if (garmentPreview) URL.revokeObjectURL(garmentPreview);
+    setGarmentFile(file);
+    setGarmentPreview(URL.createObjectURL(file));
+    setSelected(null);
+    setPasted(null);
+    setError(null);
+    setErrorHint(null);
+  }
+
+  const garmentChosen = selected ?? pasted ?? garmentFile;
 
   async function lookupProduct() {
     if (!pastedUrl.trim()) return;
     setPasteBusy(true);
     setError(null);
+    setErrorHint(null);
     try {
       const res = await fetch(`/api/product?url=${encodeURIComponent(pastedUrl)}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Lookup failed");
+      if (!res.ok) {
+        setErrorHint(data.hint ?? null);
+        throw new Error(data.error ?? "Lookup failed");
+      }
       setPasted({ image: data.image, title: data.title, category: "tops" });
       setSelected(null);
+      setGarmentFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lookup failed");
     } finally {
@@ -103,6 +127,7 @@ export default function Home() {
     if (!photo || !garmentChosen) return;
     setBusy(true);
     setError(null);
+    setErrorHint(null);
     setResult(null);
     setStep("result");
 
@@ -112,7 +137,10 @@ export default function Home() {
     form.append("weightLb", weightLb);
     form.append("usualSize", usualSize);
     form.append("fitPreference", fitPreference);
-    if (selected) {
+    if (garmentFile) {
+      form.append("garmentPhoto", garmentFile);
+      form.append("garmentCategory", garmentCategory);
+    } else if (selected) {
       form.append("garmentId", selected.id);
     } else if (pasted) {
       form.append("garmentUrl", pasted.image);
@@ -122,7 +150,10 @@ export default function Home() {
     try {
       const res = await fetch("/api/tryon", { method: "POST", body: form });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Generation failed");
+      if (!res.ok) {
+        setErrorHint(data.hint ?? null);
+        throw new Error(data.error ?? "Generation failed");
+      }
       setResult(data as TryOnResponse);
       setSessionSaved((s) => s + (data.impactKgCo2e ?? 0));
     } catch (err) {
@@ -135,9 +166,13 @@ export default function Home() {
   function startOver() {
     setResult(null);
     setError(null);
+    setErrorHint(null);
     setSelected(null);
     setPasted(null);
     setPastedUrl("");
+    if (garmentPreview) URL.revokeObjectURL(garmentPreview);
+    setGarmentFile(null);
+    setGarmentPreview(null);
     setStep("garment");
   }
 
@@ -179,6 +214,11 @@ export default function Home() {
           <div className="selvage mb-6 rounded bg-white pl-6 pr-4 py-3.5 shadow-[0_2px_8px_rgba(26,42,58,0.12)]">
             <p className="label-type text-selvage-red mb-1">Something snagged</p>
             <p className="text-sm text-charcoal">{error}</p>
+            {errorHint && (
+              <p className="text-sm text-muted mt-2 border-t-2 border-dashed border-thread-orange pt-2">
+                {errorHint}
+              </p>
+            )}
           </div>
         )}
 
@@ -340,8 +380,66 @@ export default function Home() {
             </div>
 
             <PocketPanel>
+              <p className="label-type text-classic-indigo mb-3">
+                Upload a garment image
+              </p>
+              <p className="text-sm text-muted mb-3">
+                Works with every store. Save the product photo, or right-click
+                it and &ldquo;Copy image address&rdquo; to paste below.
+              </p>
+
+              <div className="flex items-center gap-4 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => garmentInput.current?.click()}
+                  className={BTN_SECONDARY}
+                >
+                  Choose image…
+                </button>
+
+                {garmentPreview && (
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={garmentPreview}
+                      alt="Garment to try on"
+                      className="h-16 w-16 rounded object-cover border-2 border-thread-orange"
+                    />
+                    <div className="flex gap-1.5">
+                      {(["tops", "bottoms", "one-pieces"] as const).map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setGarmentCategory(c)}
+                          className={`px-2 py-0.5 rounded text-[11px] label-type border-2 ${
+                            garmentCategory === c
+                              ? "border-dark-indigo bg-dark-indigo text-white"
+                              : "border-light-wash text-classic-indigo"
+                          }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <input
+                ref={garmentInput}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) chooseGarmentFile(f);
+                }}
+              />
+
+              <div className="border-t-2 border-dashed border-thread-orange my-4" />
+
               <label className="label-type text-classic-indigo block mb-3">
-                Paste a product URL
+                …or paste a product URL
               </label>
               <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                 <input
@@ -405,6 +503,9 @@ export default function Home() {
                     onClick={() => {
                       setSelected(g);
                       setPasted(null);
+                      if (garmentPreview) URL.revokeObjectURL(garmentPreview);
+                      setGarmentFile(null);
+                      setGarmentPreview(null);
                     }}
                     className={`text-left rounded overflow-hidden bg-white border-2 transition-all hover:-translate-y-1 shadow-[0_2px_8px_rgba(26,42,58,0.12)] ${
                       active

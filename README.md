@@ -71,6 +71,29 @@ hackathon. Self-reported usual size is a stronger signal anyway.
 **Assumptions are visible.** The impact number expands to show all five inputs.
 Judges trust stated assumptions far more than a confident magic number.
 
+## Garment sources — read this before demoing
+
+There are three ways to supply a garment, and they are **not** equally reliable:
+
+| Path | Reliability | Use it for |
+|---|---|---|
+| Upload a garment image | Always works | **The live demo** |
+| Paste a direct image URL | Works nearly always | Demoing a specific real product |
+| Paste a product page URL | Store-dependent | Nice when it works |
+
+Large retailers (Lululemon, Nike, Zara, Uniqlo, H&M) sit behind Akamai or
+Cloudflare bot protection. Their product pages sometimes resolve on a first
+request and then get blocked — which is **worse than failing outright**, because
+it works while you're testing and fails on stage. Shopify-backed stores
+(Allbirds, UNTUCKit, most indie brands) work consistently.
+
+Their image CDNs are usually *not* protected, so for a blocked store you can
+still right-click the product photo, copy the image address, and paste that.
+`/api/product` detects the bot wall and tells the user exactly this.
+
+**Demo with an uploaded image.** Treat URL paste as the impressive bonus you
+attempt only if the network is behaving.
+
 ## Before you present
 
 - [ ] Replace every `CITE` placeholder in `src/lib/impact.ts` with a real source

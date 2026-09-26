@@ -3,7 +3,8 @@ import { z } from "zod";
 import { findGarment } from "@/lib/catalog";
 import { recommendFit } from "@/lib/fit";
 import { avoidedKgCo2e } from "@/lib/impact";
-import { tryOn, uploadPersonImage } from "@/lib/tryon";
+import { assertPublicHttpUrl, UnsafeUrlError } from "@/lib/net";
+import { mirrorRemoteImage, tryOn, uploadImage } from "@/lib/tryon";
 import type { GarmentCategory, TryOnResponse } from "@/lib/types";
 
 /**
@@ -93,33 +94,64 @@ export async function POST(request: Request) {
   }
   const input = parsed.data;
 
-  // Resolve the garment: either one of ours, or a scraped product URL.
-  let garmentUrl: string;
-  let category: GarmentCategory;
+  /**
+   * Three ways to supply a garment, in order of reliability:
+   *   1. an uploaded image      — always works, the demo-safe path
+   *   2. a URL we resolve       — works on Shopify stores, blocked on many big brands
+   *   3. one of our catalog items
+   */
+  const garmentPhoto = form.get("garmentPhoto");
   const garment = input.garmentId ? findGarment(input.garmentId) : undefined;
+  let category: GarmentCategory;
 
-  if (garment) {
+  if (garmentPhoto instanceof File && garmentPhoto.size > 0) {
+    if (garmentPhoto.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: "That garment image is over 10MB." },
+        { status: 413 }
+      );
+    }
+    if (!garmentPhoto.type.startsWith("image/")) {
+      return NextResponse.json(
+        { error: "That garment file isn't an image." },
+        { status: 415 }
+      );
+    }
+    category = input.garmentCategory ?? "tops";
+  } else if (garment) {
     category = garment.category;
-    garmentUrl = garment.image.startsWith("http")
-      ? garment.image
-      : new URL(garment.image, request.url).toString();
   } else if (input.garmentUrl) {
     category = input.garmentCategory ?? "tops";
-    garmentUrl = input.garmentUrl;
   } else {
     return NextResponse.json(
-      { error: "Pick a garment or paste a product URL." },
+      { error: "Pick a garment, upload an image, or paste a product URL." },
       { status: 400 }
     );
   }
 
   try {
+    let garmentUrl: string;
+    if (garmentPhoto instanceof File && garmentPhoto.size > 0) {
+      garmentUrl = await uploadImage(garmentPhoto);
+    } else if (garment) {
+      garmentUrl = garment.image.startsWith("http")
+        ? garment.image
+        : new URL(garment.image, request.url).toString();
+    } else {
+      // Re-check the URL here: it arrives straight from the client, so it has
+      // not necessarily been through /api/product's guard.
+      const safe = assertPublicHttpUrl(input.garmentUrl!);
+      // Mirror it through us so a CDN that blocks the model's fetcher fails
+      // here, where we can return a useful message, instead of silently.
+      garmentUrl = await mirrorRemoteImage(safe.toString());
+    }
+
     // PRIVACY NOTE: we never write this photo to our own database or disk. It
     // goes straight to fal's storage so the model can read it, and we keep only
     // the resulting URL in the response. Be precise when you pitch this: the
     // upload does live on fal's CDN, so do NOT claim "deleted immediately"
     // unless you add an explicit delete call here.
-    const personUrl = await uploadPersonImage(photo);
+    const personUrl = await uploadImage(photo);
 
     const result = await tryOn({ personUrl, garmentUrl, category });
 
@@ -142,6 +174,9 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[api/tryon]", err);
+    if (err instanceof UnsafeUrlError) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     return NextResponse.json(
       { error: `Try-on failed: ${message}` },
       { status: 502 }
