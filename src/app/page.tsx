@@ -11,6 +11,7 @@ import {
 } from "@/lib/customGarments";
 import { CATALOG } from "@/lib/catalog";
 import { ASSUMPTIONS, equivalence } from "@/lib/impact";
+import { checkPhoto, readImageSize } from "@/lib/photoCheck";
 import { GarmentImage } from "@/components/GarmentImage";
 import { PhotoGuidance } from "@/components/PhotoGuidance";
 import { PocketPanel } from "@/components/PocketPanel";
@@ -45,6 +46,10 @@ export default function Home() {
 
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoSize, setPhotoSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   const [heightIn, setHeightIn] = useState("70");
   const [weightLb, setWeightLb] = useState("165");
@@ -97,10 +102,27 @@ export default function Home() {
   }, [busy]);
 
   /** Revoke the previous blob URL as we swap in a new one, so we don't leak. */
-  function choosePhoto(file: File) {
+  async function choosePhoto(file: File) {
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhoto(file);
     setPhotoPreview(URL.createObjectURL(file));
+    try {
+      setPhotoSize(await readImageSize(file));
+    } catch {
+      setPhotoSize(null);
+    }
+  }
+
+  /** Load the bundled full-body sample — the reliable way to demo bottoms. */
+  async function useSamplePhoto() {
+    setError(null);
+    try {
+      const res = await fetch("/samples/full-body-1.jpg");
+      const blob = await res.blob();
+      await choosePhoto(new File([blob], "sample.jpg", { type: "image/jpeg" }));
+    } catch {
+      setError("Couldn't load the sample photo.");
+    }
   }
 
   /** Choosing any one garment source clears the other two. */
@@ -115,6 +137,19 @@ export default function Home() {
   }
 
   const garmentChosen = selected ?? pasted ?? garmentFile;
+
+  /** Which category the pending try-on will use, for the framing check. */
+  const pendingCategory: GarmentCategory | null = garmentFile
+    ? garmentCategory
+    : selected
+      ? selected.category
+      : pasted
+        ? pasted.category
+        : null;
+
+  const photoVerdict = photoSize
+    ? checkPhoto(photoSize.width, photoSize.height, pendingCategory)
+    : null;
 
   async function lookupProduct() {
     if (!pastedUrl.trim()) return;
@@ -303,6 +338,27 @@ export default function Home() {
                   if (f) choosePhoto(f);
                 }}
               />
+
+              <button
+                type="button"
+                onClick={useSamplePhoto}
+                className="w-full rounded border-2 border-dashed border-light-wash px-4 py-2.5 label-type text-classic-indigo hover:border-classic-indigo hover:bg-white transition-colors"
+              >
+                Or use a sample full-body photo
+              </button>
+
+              {photoVerdict?.framing === "cropped" && (
+                <div className="selvage rounded bg-white pl-5 pr-3 py-2.5">
+                  <p className="label-type text-selvage-red mb-1">
+                    Looks cropped
+                  </p>
+                  <p className="text-sm text-charcoal">
+                    This photo is {photoVerdict.ratio} wide-to-tall. Full-body
+                    shots are usually 0.75 or less. Trousers and dresses need
+                    your legs and feet in frame.
+                  </p>
+                </div>
+              )}
 
               <p className="text-xs text-muted">
                 Your photo is sent to the try-on model and is never saved to our
@@ -603,6 +659,22 @@ export default function Home() {
             </div>
 
             <AddGarment onAdded={() => undefined} />
+
+            {photoVerdict?.warning && (
+              <div className="selvage rounded bg-white pl-6 pr-4 py-3.5 shadow-[0_2px_8px_rgba(26,42,58,0.12)]">
+                <p className="label-type text-selvage-red mb-1">
+                  Your photo may not suit this garment
+                </p>
+                <p className="text-sm text-charcoal">{photoVerdict.warning}</p>
+                <button
+                  type="button"
+                  onClick={() => setStep("you")}
+                  className="mt-2 label-type text-classic-indigo underline underline-offset-4"
+                >
+                  Use a different photo
+                </button>
+              </div>
+            )}
 
             <button
               type="button"
