@@ -715,7 +715,7 @@ export default function Home() {
             ))}
           </div>
           <p className="label-type text-medium-wash">
-            Built at Temple Owl Hacks · Sustainability Track
+            FitMe Demo for OwlHacks 2026!
           </p>
           <p className="text-xs text-light-wash/70 mt-2">
             Try-on images are AI-generated previews, not photographs.

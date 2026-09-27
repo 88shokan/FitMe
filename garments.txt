@@ -9,7 +9,7 @@
 # Large retailers block page scraping but usually serve their image CDNs
 # fine, so this works even where pasting the product URL does not.
 
-heavyweight-tee=
-denim-jacket=
-straight-jeans=
-shirt-dress=
+hoodie=
+jacket=
+denim=
+shirt=

@@ -3,12 +3,11 @@ import type { Garment } from "./types";
 /**
  * Seeded demo catalog — deliberately small and hardcoded.
  *
- * These four cover all three garment categories (tops / bottoms / one-pieces),
- * which is what exercises the category handling in the try-on model.
- *
  * This catalog matters more than it looks: it is the ONLY garment source with a
  * size chart, so it's the only path that produces a size recommendation.
  * Uploaded and pasted garments return `fit: null`.
+ *
+ * Ids are kept short and obvious because you type them into garments.txt.
  *
  * To populate the images:  npm run garments   (see scripts/fetch-garments.mjs)
  *
@@ -17,42 +16,43 @@ import type { Garment } from "./types";
  */
 export const CATALOG: Garment[] = [
   {
-    id: "heavyweight-tee",
-    name: "Heavyweight Cotton Tee",
+    id: "hoodie",
+    name: "Pullover Hoodie",
     brand: "Placeholder Co",
-    priceUsd: 28,
+    priceUsd: 68,
     category: "tops",
-    image: "/garments/heavyweight-tee.jpg",
-    fabric: "100% cotton",
+    image: "/garments/hoodie.jpg",
+    fabric: "80% cotton, 20% polyester fleece",
     sizeChart: [
-      { size: "S", chest: 36, length: 27 },
-      { size: "M", chest: 40, length: 28 },
-      { size: "L", chest: 44, length: 29 },
-      { size: "XL", chest: 48, length: 30 },
+      { size: "S", chest: 40, length: 26 },
+      { size: "M", chest: 44, length: 27 },
+      { size: "L", chest: 48, length: 28 },
+      { size: "XL", chest: 52, length: 29 },
     ],
   },
   {
-    id: "denim-jacket",
-    name: "Classic Denim Jacket",
+    id: "jacket",
+    name: "Chore Jacket",
     brand: "Placeholder Co",
-    priceUsd: 89,
+    priceUsd: 110,
     category: "tops",
-    image: "/garments/denim-jacket.jpg",
-    fabric: "99% cotton, 1% elastane",
+    // Cut roomier than a shirt because it's meant to layer over one.
+    image: "/garments/jacket.jpg",
+    fabric: "100% cotton canvas",
     sizeChart: [
-      { size: "S", chest: 38, length: 25 },
-      { size: "M", chest: 42, length: 26 },
-      { size: "L", chest: 46, length: 27 },
-      { size: "XL", chest: 50, length: 28 },
+      { size: "S", chest: 41, length: 26 },
+      { size: "M", chest: 45, length: 27 },
+      { size: "L", chest: 49, length: 28 },
+      { size: "XL", chest: 53, length: 29 },
     ],
   },
   {
-    id: "straight-jeans",
+    id: "denim",
     name: "Straight-Leg Jeans",
     brand: "Placeholder Co",
     priceUsd: 78,
     category: "bottoms",
-    image: "/garments/straight-jeans.jpg",
+    image: "/garments/denim.jpg",
     fabric: "98% cotton, 2% elastane",
     sizeChart: [
       { size: "S", waist: 30, hip: 38 },
@@ -62,18 +62,18 @@ export const CATALOG: Garment[] = [
     ],
   },
   {
-    id: "shirt-dress",
-    name: "Midi Shirt Dress",
+    id: "shirt",
+    name: "Oxford Button-Down",
     brand: "Placeholder Co",
-    priceUsd: 95,
-    category: "one-pieces",
-    image: "/garments/shirt-dress.jpg",
-    fabric: "70% viscose, 30% linen",
+    priceUsd: 65,
+    category: "tops",
+    image: "/garments/shirt.jpg",
+    fabric: "100% cotton",
     sizeChart: [
-      { size: "S", chest: 35, waist: 29, hip: 38, length: 45 },
-      { size: "M", chest: 37, waist: 31, hip: 40, length: 46 },
-      { size: "L", chest: 39, waist: 33, hip: 42, length: 47 },
-      { size: "XL", chest: 41, waist: 35, hip: 44, length: 48 },
+      { size: "S", chest: 38, length: 29 },
+      { size: "M", chest: 42, length: 30 },
+      { size: "L", chest: 46, length: 31 },
+      { size: "XL", chest: 50, length: 32 },
     ],
   },
 ];
