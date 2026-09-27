@@ -113,18 +113,6 @@ export default function Home() {
     }
   }
 
-  /** Load the bundled full-body sample — the reliable way to demo bottoms. */
-  async function useSamplePhoto() {
-    setError(null);
-    try {
-      const res = await fetch("/samples/full-body-1.jpg");
-      const blob = await res.blob();
-      await choosePhoto(new File([blob], "sample.jpg", { type: "image/jpeg" }));
-    } catch {
-      setError("Couldn't load the sample photo.");
-    }
-  }
-
   /** Choosing any one garment source clears the other two. */
   function chooseGarmentFile(file: File) {
     if (garmentPreview) URL.revokeObjectURL(garmentPreview);
@@ -338,14 +326,6 @@ export default function Home() {
                   if (f) choosePhoto(f);
                 }}
               />
-
-              <button
-                type="button"
-                onClick={useSamplePhoto}
-                className="w-full rounded border-2 border-dashed border-light-wash px-4 py-2.5 label-type text-classic-indigo hover:border-classic-indigo hover:bg-white transition-colors"
-              >
-                Or use a sample full-body photo
-              </button>
 
               {photoVerdict?.framing === "cropped" && (
                 <div className="selvage rounded bg-white pl-5 pr-3 py-2.5">
