@@ -9,7 +9,7 @@
 # Large retailers block page scraping but usually serve their image CDNs
 # fine, so this works even where pasting the product URL does not.
 
-hoodie= https://static.nike.com/a/images/t_web_pdp_535_v2/f_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/3d28cfc0-084a-468c-9f9b-e6a09e01c477/W+NK+STDO+FLC+MW+OS+CREW.png
-jacket= https://img.abercrombie.com/is/image/anf/KIC_144-6294-00523-900_model2?policy=product-medium
-denim= https://img.abercrombie.com/is/image/anf/KIC_156-6419-01298-178_model1?policy=product-medium
-shirt= https://img.abercrombie.com/is/image/anf/KIC_140-26029-00124-900_model2?policy=product-medium
+crewneck=https://static.nike.com/a/images/t_web_pdp_535_v2/f_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/3d28cfc0-084a-468c-9f9b-e6a09e01c477/W+NK+STDO+FLC+MW+OS+CREW.png
+moto-jacket=https://img.abercrombie.com/is/image/anf/KIC_144-6294-00523-900_model2?policy=product-medium
+wide-trousers=https://img.abercrombie.com/is/image/anf/KIC_156-6419-01298-178_model1?policy=product-medium
+matching-set=https://img.abercrombie.com/is/image/anf/KIC_140-26029-00124-900_model2?policy=product-medium
