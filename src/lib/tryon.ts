@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { fal } from "@fal-ai/client";
 import type { TryOnInput, TryOnResult } from "./types";
 
@@ -63,6 +65,65 @@ export async function uploadImage(file: File | Blob): Promise<string> {
 
 /** Kept for readability at the call site; person and garment share one path. */
 export const uploadPersonImage = uploadImage;
+
+const MIME_BY_EXT: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".avif": "image/avif",
+  ".gif": "image/gif",
+};
+
+/** Uploaded catalog images, keyed by public path. Saves a re-upload per try-on. */
+const localUploadCache = new Map<string, string>();
+
+/**
+ * Upload a file from /public to fal and return its hosted URL.
+ *
+ * Catalog images MUST go through here rather than being handed to the model as
+ * a URL. Building one from the request origin yields
+ * `http://localhost:3000/garments/hoodie.avif`, which fal's servers cannot
+ * reach — they answer "Connection refused". That would have worked once
+ * deployed and never in local dev, which is the worst way for a bug to hide.
+ */
+export async function uploadLocalImage(publicPath: string): Promise<string> {
+  const cached = localUploadCache.get(publicPath);
+  if (cached) return cached;
+
+  configure();
+
+  const publicDir = path.join(process.cwd(), "public");
+  const abs = path.resolve(publicDir, publicPath.replace(/^\/+/, ""));
+  // The path comes from our own catalog, but keep it inside /public regardless.
+  if (!abs.startsWith(publicDir)) {
+    throw new Error(`Refusing to read outside /public: ${publicPath}`);
+  }
+
+  const type = MIME_BY_EXT[path.extname(abs).toLowerCase()];
+  if (!type) {
+    throw new Error(
+      `Unsupported image type for ${publicPath}. Use jpg, png, webp or avif.`
+    );
+  }
+
+  let buf: Buffer;
+  try {
+    buf = await readFile(abs);
+  } catch {
+    throw new Error(
+      `Catalog image missing: public${publicPath}. Add its URL to garments.txt and run \`npm run garments\`.`
+    );
+  }
+
+  // Wrap in Uint8Array: a Node Buffer may be backed by a SharedArrayBuffer,
+  // which isn't a valid BlobPart as far as the DOM types are concerned.
+  const url = await uploadImage(
+    new File([new Uint8Array(buf)], path.basename(abs), { type })
+  );
+  localUploadCache.set(publicPath, url);
+  return url;
+}
 
 /**
  * Download a remote image and re-host it on fal.

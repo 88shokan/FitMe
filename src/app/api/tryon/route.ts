@@ -4,7 +4,12 @@ import { findGarment } from "@/lib/catalog";
 import { recommendFit } from "@/lib/fit";
 import { avoidedKgCo2e } from "@/lib/impact";
 import { assertPublicHttpUrl, UnsafeUrlError } from "@/lib/net";
-import { mirrorRemoteImage, tryOn, uploadImage } from "@/lib/tryon";
+import {
+  mirrorRemoteImage,
+  tryOn,
+  uploadImage,
+  uploadLocalImage,
+} from "@/lib/tryon";
 import type { GarmentCategory, TryOnResponse } from "@/lib/types";
 
 /**
@@ -134,9 +139,11 @@ export async function POST(request: Request) {
     if (garmentPhoto instanceof File && garmentPhoto.size > 0) {
       garmentUrl = await uploadImage(garmentPhoto);
     } else if (garment) {
+      // Read it off disk and upload. Never hand the model a URL pointing back
+      // at us — in local dev that's localhost, which fal cannot reach.
       garmentUrl = garment.image.startsWith("http")
         ? garment.image
-        : new URL(garment.image, request.url).toString();
+        : await uploadLocalImage(garment.image);
     } else {
       // Re-check the URL here: it arrives straight from the client, so it has
       // not necessarily been through /api/product's guard.

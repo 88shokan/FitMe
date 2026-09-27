@@ -21,7 +21,7 @@ export const CATALOG: Garment[] = [
     brand: "Placeholder Co",
     priceUsd: 68,
     category: "tops",
-    image: "/garments/hoodie.jpg",
+    image: "/garments/hoodie.avif",
     fabric: "80% cotton, 20% polyester fleece",
     sizeChart: [
       { size: "S", chest: 40, length: 26 },
@@ -37,7 +37,7 @@ export const CATALOG: Garment[] = [
     priceUsd: 110,
     category: "tops",
     // Cut roomier than a shirt because it's meant to layer over one.
-    image: "/garments/jacket.jpg",
+    image: "/garments/jacket.avif",
     fabric: "100% cotton canvas",
     sizeChart: [
       { size: "S", chest: 41, length: 26 },
@@ -52,7 +52,7 @@ export const CATALOG: Garment[] = [
     brand: "Placeholder Co",
     priceUsd: 78,
     category: "bottoms",
-    image: "/garments/denim.jpg",
+    image: "/garments/denim.avif",
     fabric: "98% cotton, 2% elastane",
     sizeChart: [
       { size: "S", waist: 30, hip: 38 },
@@ -67,7 +67,7 @@ export const CATALOG: Garment[] = [
     brand: "Placeholder Co",
     priceUsd: 65,
     category: "tops",
-    image: "/garments/shirt.jpg",
+    image: "/garments/shirt.avif",
     fabric: "100% cotton",
     sizeChart: [
       { size: "S", chest: 38, length: 29 },
