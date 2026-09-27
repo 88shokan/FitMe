@@ -493,6 +493,22 @@ export default function Home() {
 
             <StitchDivider />
 
+            <div>
+              <div className="flex items-baseline gap-3 flex-wrap mb-1">
+                <h3 className="display text-2xl text-raw-denim">
+                  From the rack
+                </h3>
+                <span className="badge-copper label-type rounded px-2.5 py-1 text-raw-denim">
+                  Size chart included
+                </span>
+              </div>
+              <p className="text-sm text-charcoal mb-4 max-w-2xl">
+                These pieces ship with full size charts, so picking one gets you
+                a <strong>recommended size and fit confidence</strong> alongside
+                your try-on. Uploaded or pasted garments only get the image.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {CATALOG.map((g) => {
                 const active = selected?.id === g.id;

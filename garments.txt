@@ -1,0 +1,15 @@
+# FitMe garment images
+#
+# One `id=url` per line. The id must match an entry in src/lib/catalog.ts.
+# Get a URL by right-clicking a product photo -> "Copy image address".
+# Flat-lay or plain-background shots work far better than on-model shots.
+#
+# Then run:  npm run garments
+#
+# Large retailers block page scraping but usually serve their image CDNs
+# fine, so this works even where pasting the product URL does not.
+
+heavyweight-tee=
+denim-jacket=
+straight-jeans=
+shirt-dress=

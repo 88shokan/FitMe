@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "garments": "node scripts/fetch-garments.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
