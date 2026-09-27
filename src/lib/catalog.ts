@@ -67,23 +67,6 @@ export const CATALOG: Garment[] = [
       { size: "XL", waist: 38, hip: 50 },
     ],
   },
-  {
-    id: "matching-set",
-    name: "Boxy Two-Piece Set",
-    brand: "Abercrombie & Fitch",
-    priceUsd: 120,
-    // Tagged one-pieces because the photo shows the top and trousers worn
-    // together — telling the model "tops" would make it extract only half.
-    category: "one-pieces",
-    image: "/garments/matching-set.avif",
-    fabric: "70% viscose, 30% linen",
-    sizeChart: [
-      { size: "S", chest: 38, waist: 30, hip: 42, length: 44 },
-      { size: "M", chest: 41, waist: 33, hip: 45, length: 45 },
-      { size: "L", chest: 44, waist: 36, hip: 48, length: 46 },
-      { size: "XL", chest: 47, waist: 39, hip: 51, length: 47 },
-    ],
-  },
 ];
 
 export function findGarment(id: string): Garment | undefined {
