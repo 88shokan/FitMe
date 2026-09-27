@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AddGarment } from "@/components/AddGarment";
+import {
+  dataUrlToFile,
+  getCustomGarmentsServerSnapshot,
+  getCustomGarmentsSnapshot,
+  removeCustomGarment,
+  subscribeCustomGarments,
+} from "@/lib/customGarments";
 import { CATALOG } from "@/lib/catalog";
 import { ASSUMPTIONS, equivalence } from "@/lib/impact";
 import { GarmentImage } from "@/components/GarmentImage";
@@ -71,6 +79,13 @@ export default function Home() {
   const fileInput = useRef<HTMLInputElement>(null);
   const garmentInput = useRef<HTMLInputElement>(null);
 
+  /** Garments the user added, read straight from localStorage. */
+  const customGarments = useSyncExternalStore(
+    subscribeCustomGarments,
+    getCustomGarmentsSnapshot,
+    getCustomGarmentsServerSnapshot
+  );
+
   // Cycle the wait copy while a generation is in flight.
   useEffect(() => {
     if (!busy) return;
@@ -140,6 +155,23 @@ export default function Home() {
     if (garmentFile) {
       form.append("garmentPhoto", garmentFile);
       form.append("garmentCategory", garmentCategory);
+    } else if (selected && "custom" in selected) {
+      // A user-added garment: its image lives in localStorage as a data URL, so
+      // send it up the upload path, and send the spec so it earns a size call.
+      form.append(
+        "garmentPhoto",
+        await dataUrlToFile(selected.image, `${selected.id}.jpg`)
+      );
+      form.append("garmentCategory", selected.category);
+      form.append(
+        "garmentSpec",
+        JSON.stringify({
+          name: selected.name,
+          fabric: selected.fabric,
+          category: selected.category,
+          sizeChart: selected.sizeChart,
+        })
+      );
     } else if (selected) {
       form.append("garmentId", selected.id);
     } else if (pasted) {
@@ -510,42 +542,67 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {CATALOG.map((g) => {
+              {[...customGarments, ...CATALOG].map((g) => {
+                const isCustom = "custom" in g;
                 const active = selected?.id === g.id;
                 return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => {
-                      setSelected(g);
-                      setPasted(null);
-                      if (garmentPreview) URL.revokeObjectURL(garmentPreview);
-                      setGarmentFile(null);
-                      setGarmentPreview(null);
-                    }}
-                    className={`text-left rounded overflow-hidden bg-white border-2 transition-all hover:-translate-y-1 shadow-[0_2px_8px_rgba(26,42,58,0.12)] ${
-                      active
-                        ? "border-thread-orange ring-2 ring-thread-orange/30"
-                        : "border-light-wash hover:border-classic-indigo"
-                    }`}
-                  >
-                    <GarmentImage
-                      src={g.image}
-                      alt={g.name}
-                      className="aspect-[3/4] w-full object-cover"
-                    />
-                    <div className="p-3 border-t-2 border-dashed border-thread-orange">
-                      <p className="heading text-sm text-raw-denim leading-tight">
-                        {g.name}
-                      </p>
-                      <p className="label-type text-muted mt-1">
-                        ${g.priceUsd} · {g.category}
-                      </p>
-                    </div>
-                  </button>
+                  // Wrapper, not a nested button: a remove control inside the
+                  // card button would be invalid HTML.
+                  <div key={g.id} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelected(g);
+                        setPasted(null);
+                        if (garmentPreview) URL.revokeObjectURL(garmentPreview);
+                        setGarmentFile(null);
+                        setGarmentPreview(null);
+                      }}
+                      className={`block w-full text-left rounded overflow-hidden bg-white border-2 transition-all hover:-translate-y-1 shadow-[0_2px_8px_rgba(26,42,58,0.12)] ${
+                        active
+                          ? "border-thread-orange ring-2 ring-thread-orange/30"
+                          : "border-light-wash hover:border-classic-indigo"
+                      }`}
+                    >
+                      <GarmentImage
+                        src={g.image}
+                        alt={g.name}
+                        className="aspect-[3/4] w-full object-cover"
+                      />
+                      <div className="p-3 border-t-2 border-dashed border-thread-orange">
+                        <p className="heading text-sm text-raw-denim leading-tight">
+                          {g.name}
+                        </p>
+                        <p className="label-type text-muted mt-1">
+                          ${g.priceUsd || "—"} · {g.category}
+                        </p>
+                      </div>
+                    </button>
+
+                    {isCustom && (
+                      <>
+                        <span className="badge-copper absolute top-2 left-2 rounded px-2 py-0.5 label-type text-raw-denim pointer-events-none">
+                          Yours
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${g.name}`}
+                          onClick={() => {
+                            removeCustomGarment(g.id);
+                            if (selected?.id === g.id) setSelected(null);
+                          }}
+                          className="absolute top-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-raw-denim/80 text-white text-sm leading-none hover:bg-selvage-red transition-colors"
+                        >
+                          ×
+                        </button>
+                      </>
+                    )}
+                  </div>
                 );
               })}
             </div>
+
+            <AddGarment onAdded={() => undefined} />
 
             <button
               type="button"

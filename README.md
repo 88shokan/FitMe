@@ -24,8 +24,8 @@ would fit.
 FitMe closes that information gap before the order is placed.
 
 1. **Upload one full-body photo.** No measuring tape, no body scan, no app.
-2. **Pick a garment** — from the catalog, by uploading a product image, or by
-   pasting a product link from a store.
+2. **Pick a garment** — from the catalog, by uploading a product image, by
+   pasting a product link, or by **adding your own garment** to the catalog.
 3. **Get three things back:**
    - a generated image of **you wearing that specific garment**
    - a **recommended size with a confidence score**, reasoned from the garment's
@@ -52,6 +52,19 @@ genuinely different answers:
 **The impact number shows its work.** Tap "show our assumptions" and all five
 inputs are listed with their sources. A stated assumption is more honest — and
 more persuasive — than a confident magic number.
+
+**Users can add their own garments.** "Add your own garment" takes a photo, a
+name, and the size table — *pasted straight off the product page*, which Claude
+reads into a structured chart rather than making anyone fill in sixteen number
+fields. It handles tables oriented either way, ranges like `38-40`, and
+centimetres. Added garments live in that browser's localStorage, appear in the
+grid, and earn the same size recommendation as seeded items:
+
+> *"We suggest L because it runs about 3.0" tighter than a standard M, and the
+> 95% cotton, 5% elastane has real give."*
+
+Without `ANTHROPIC_API_KEY` the paste-parsing returns a clear message and the
+form falls back to manual entry, so the feature degrades rather than breaking.
 
 ### What's real and what's estimated
 
@@ -147,6 +160,9 @@ Browser                Next.js route handler              fal.ai
 | `src/lib/impact.ts` | CO₂e math. Every assumption is named and needs a real citation |
 | `src/lib/catalog.ts` | Seeded garments and their size charts |
 | `src/lib/net.ts` | SSRF guards and bot-wall detection for user-supplied URLs |
+| `src/lib/customGarments.ts` | localStorage store for user-added garments |
+| `src/components/AddGarment.tsx` | The "add your own garment" form |
+| `src/app/api/parse-size-chart/route.ts` | Claude reads a pasted size table into a chart |
 | `src/app/api/tryon/route.ts` | Main endpoint: upload → generate → size → impact |
 | `src/app/api/product/route.ts` | Resolves a product URL to a garment image |
 | `scripts/fetch-garments.mjs` | `npm run garments` — downloads catalog images |

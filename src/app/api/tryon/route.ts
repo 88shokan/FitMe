@@ -10,7 +10,7 @@ import {
   uploadImage,
   uploadLocalImage,
 } from "@/lib/tryon";
-import type { GarmentCategory, TryOnResponse } from "@/lib/types";
+import type { Garment, GarmentCategory, TryOnResponse } from "@/lib/types";
 
 /**
  * Generation takes 5-20s, well past the default serverless timeout. Without
@@ -21,6 +21,29 @@ export const maxDuration = 60;
 export const runtime = "nodejs";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/**
+ * A user-added garment. The client holds these in localStorage, so it sends the
+ * spec along with the image — that's what lets a custom garment earn a real size
+ * recommendation instead of `fit: null`.
+ */
+const GarmentSpecSchema = z.object({
+  name: z.string().min(1).max(120),
+  fabric: z.string().max(200).default(""),
+  category: z.enum(["tops", "bottoms", "one-pieces"]),
+  sizeChart: z
+    .array(
+      z.object({
+        size: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
+        chest: z.number().positive().max(120).optional(),
+        waist: z.number().positive().max(120).optional(),
+        hip: z.number().positive().max(120).optional(),
+        length: z.number().positive().max(120).optional(),
+      })
+    )
+    .min(1)
+    .max(10),
+});
 
 const BodySchema = z.object({
   garmentId: z.string().min(1).optional(),
@@ -109,6 +132,35 @@ export async function POST(request: Request) {
   const garment = input.garmentId ? findGarment(input.garmentId) : undefined;
   let category: GarmentCategory;
 
+  // Optional spec for a user-added garment, so it can earn a size recommendation.
+  let specGarment: Garment | undefined;
+  const rawSpec = form.get("garmentSpec");
+  if (typeof rawSpec === "string" && rawSpec.trim()) {
+    let candidate: unknown;
+    try {
+      candidate = JSON.parse(rawSpec);
+    } catch {
+      return NextResponse.json(
+        { error: "Couldn't read that garment's details." },
+        { status: 400 }
+      );
+    }
+    const spec = GarmentSpecSchema.safeParse(candidate);
+    if (!spec.success) {
+      return NextResponse.json(
+        { error: "That garment's size chart isn't valid.", issues: spec.error.issues },
+        { status: 400 }
+      );
+    }
+    specGarment = {
+      id: "custom",
+      brand: "Added by you",
+      priceUsd: 0,
+      image: "",
+      ...spec.data,
+    };
+  }
+
   if (garmentPhoto instanceof File && garmentPhoto.size > 0) {
     if (garmentPhoto.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json(
@@ -162,9 +214,11 @@ export async function POST(request: Request) {
 
     const result = await tryOn({ personUrl, garmentUrl, category });
 
-    // Only our own catalog has a real size chart to reason over.
-    const fit = garment
-      ? await recommendFit(garment, {
+    // A size recommendation needs a size chart — from our catalog, or sent
+    // along with a user-added garment.
+    const fitSource = garment ?? specGarment;
+    const fit = fitSource
+      ? await recommendFit(fitSource, {
           heightIn: input.heightIn,
           weightLb: input.weightLb,
           usualSize: input.usualSize,
